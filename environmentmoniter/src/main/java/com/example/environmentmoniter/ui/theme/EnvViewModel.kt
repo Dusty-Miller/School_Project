@@ -10,34 +10,53 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class EnvViewModel : ViewModel() {
+
     private val _sensorData = MutableStateFlow(SensorData(0f, 0f, 0f))
     val sensorData: StateFlow<SensorData> = _sensorData
 
     private val _history = MutableStateFlow<List<SensorData>>(emptyList())
     val history: StateFlow<List<SensorData>> = _history
 
+    private var isFetching = false // ✅ 중복 호출 방지용 플래그
+
     fun fetchSensorData() {
+        if (isFetching) return
+
         viewModelScope.launch {
+            isFetching = true
             try {
-                Log.d("RETROFIT_DEBUG", "📡 요청 시작: http://192.168.200.17:5000/api/data/latest")
-                val response = RetrofitInstance.api.getLatestData() // Response<SensorData>
+                // ✅ 에뮬레이터에서 PC 서버 접근은 반드시 10.0.2.2 사용
+                val url = "http://10.0.2.2:5000/api/data/latest"
+                Log.d("RETROFIT_DEBUG", "📡 요청 시작: $url")
+
+                val response = RetrofitInstance.api.getLatestData()
 
                 if (response.isSuccessful) {
                     val data = response.body()
                     if (data != null) {
                         Log.d("RETROFIT_DEBUG", "✅ 응답 성공: $data")
+
                         _sensorData.value = data
-                        _history.value = _history.value + data
+
+                        // 📈 그래프용 히스토리 누적 (최근 50개까지만 유지)
+                        val updatedList = _history.value.toMutableList().apply {
+                            add(data)
+                            if (size > 50) removeAt(0)
+                        }
+                        _history.value = updatedList
                     } else {
-                        Log.e("RETROFIT_DEBUG", "⚠️ 응답 Body가 null임")
+                        Log.w("RETROFIT_DEBUG", "⚠️ 응답 Body가 null임")
                     }
                 } else {
-                    Log.e("RETROFIT_DEBUG", "❌ 서버 응답 실패: ${response.code()}")
+                    Log.e("RETROFIT_DEBUG", "❌ 서버 응답 실패: ${response.code()} ${response.message()}")
                 }
 
             } catch (e: Exception) {
-                Log.e("RETROFIT_DEBUG", "💥 요청 중 예외 발생: ${e.message}")
+                Log.e("RETROFIT_DEBUG", "💥 요청 중 예외 발생: ${e.localizedMessage}")
+            } finally {
+                isFetching = false
             }
         }
     }
 }
+

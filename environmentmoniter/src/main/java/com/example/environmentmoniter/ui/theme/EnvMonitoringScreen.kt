@@ -1,6 +1,5 @@
 package com.example.environmentmoniter.ui
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,13 +15,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.environmentmoniter.data.SensorData
-import com.example.environmentmoniter.data.RetrofitInstance
 import com.example.environmentmoniter.ui.theme.EnvViewModel
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.Description
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // 🌈 버튼 공통
@@ -60,12 +59,19 @@ fun EnvMonitoringScreen(
     viewModel: EnvViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     onNavigateToMap: () -> Unit = {}
 ) {
-    val scope = rememberCoroutineScope()
     val background = Color(0xFF0B1228)
     val textColor = Color.White
 
     val data by viewModel.sensorData.collectAsState()
     val history by viewModel.history.collectAsState()
+
+    // ✅ 1️⃣ 자동 새로고침 루프 (3초마다 fetch)
+    LaunchedEffect(Unit) {
+        while (true) {
+            viewModel.fetchSensorData()
+            delay(3000)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -94,12 +100,9 @@ fun EnvMonitoringScreen(
                 GradientButton(
                     "새로고침",
                     listOf(Color(0xFF2196F3), Color(0xFF42A5F5)),
-                    onClick = {
-                        viewModel.fetchSensorData()
-                    }
+                    onClick = { viewModel.fetchSensorData() }
                 )
 
-                // 🗺 실시간 대기질 확인하기
                 GradientButton(
                     "대기질 지도",
                     listOf(Color(0xFF4CAF50), Color(0xFF81C784)),
@@ -110,6 +113,7 @@ fun EnvMonitoringScreen(
 
         Spacer(Modifier.height(20.dp))
 
+        // 📦 실시간 카드
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -140,6 +144,8 @@ fun EnvMonitoringScreen(
         }
 
         Spacer(Modifier.height(20.dp))
+
+        // 📈 실시간 데이터 추이
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -269,6 +275,10 @@ fun EnvLineChart(history: List<SensorData>) {
                 axisLeft.textColor = android.graphics.Color.LTGRAY
                 legend.textColor = android.graphics.Color.WHITE
                 description = Description().apply { text = "" }
+
+                // ✅ 2️⃣ 자동 스크롤 + 부드러운 애니메이션
+                moveViewToX(data.entryCount.toFloat())
+                animateX(500)
                 invalidate()
             }
         },

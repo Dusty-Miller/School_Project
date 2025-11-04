@@ -56,7 +56,10 @@ fun GradientButton(
 
 // 🌍 환경 모니터링 메인 화면
 @Composable
-fun EnvMonitoringScreen(viewModel: EnvViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+fun EnvMonitoringScreen(
+    viewModel: EnvViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    onNavigateToMap: () -> Unit = {}
+) {
     val scope = rememberCoroutineScope()
     val background = Color(0xFF0B1228)
     val textColor = Color.White
@@ -88,22 +91,25 @@ fun EnvMonitoringScreen(viewModel: EnvViewModel = androidx.lifecycle.viewmodel.c
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 🔄 데이터 새로고침
                 GradientButton(
                     "새로고침",
                     listOf(Color(0xFF2196F3), Color(0xFF42A5F5)),
                     onClick = {
-                        Log.d("RETROFIT_DEBUG", "🔄 새로고침 버튼 클릭됨 → fetchSensorData 호출")
                         viewModel.fetchSensorData()
                     }
                 )
 
+                // 🗺 실시간 대기질 확인하기
+                GradientButton(
+                    "대기질 지도",
+                    listOf(Color(0xFF4CAF50), Color(0xFF81C784)),
+                    onClick = { onNavigateToMap() }
+                )
             }
         }
 
         Spacer(Modifier.height(20.dp))
 
-        // 📦 실시간 카드 3개
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -117,7 +123,6 @@ fun EnvMonitoringScreen(viewModel: EnvViewModel = androidx.lifecycle.viewmodel.c
                 statusColor = getPmColor(data.dust),
                 modifier = Modifier.weight(1f)
             )
-
             InfoCard(
                 title = "온도",
                 value = "${data.temperature}℃",
@@ -125,7 +130,6 @@ fun EnvMonitoringScreen(viewModel: EnvViewModel = androidx.lifecycle.viewmodel.c
                 statusColor = getTempColor(data.temperature),
                 modifier = Modifier.weight(1f)
             )
-
             InfoCard(
                 title = "습도",
                 value = "${data.humidity}%",
@@ -136,8 +140,6 @@ fun EnvMonitoringScreen(viewModel: EnvViewModel = androidx.lifecycle.viewmodel.c
         }
 
         Spacer(Modifier.height(20.dp))
-
-        // 📈 실시간 데이터 추이
         Column(
             modifier = Modifier
                 .fillMaxWidth()

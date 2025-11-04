@@ -2,21 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.environmentmoniter">
 
+    <!-- 🌐 네트워크 및 위치 권한 -->
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- BLE 기본 권한 -->
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-
-    <!-- Android 12+ 전용 (필수) -->
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
-
-    <!-- 위치 권한 (BLE 스캔 시 필수) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
 
     <application
         android:allowBackup="true"
@@ -27,6 +16,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.App.Starting">
 
+        <!-- 🌍 네이버 맵 API 키 -->
+        <meta-data
+            android:name="com.naver.maps.map.NCP_KEY_ID"
+            android:value="z3hvgcl04h" />
+
+        <!-- 🚀 앱 진입점 -->
         <activity
             android:name=".MainActivity"
             android:exported="true"

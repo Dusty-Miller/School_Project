@@ -8,46 +8,35 @@ import java.net.URL
 import java.net.URLEncoder
 import java.net.URLDecoder
 import android.util.Log
-
 class AirQualityRepository {
 
     private val TAG = "AirQualityRepository"
 
-    // 포털에서 발급받은 서비스키
-//    private val apiKeyRaw = "6c549226b1d12a833ada73516d6c902581e58510a3cf814f84d69714a4af21f8"
-//
-//    private val baseUrl = "https://apis.data.go.kr/B552584/ArpltnInforInqireSvc"
+    // 공공데이터포털 일반 인증키 (그대로 사용)
+    private val serviceKey = "6c549226b1d12a833ada73516d6c902581e58510a3cf814f84d69714a4af21f8"
+
+    private val baseUrl = "https://apis.data.go.kr/B552584/ArpltnInforInqireSvc"
 
     suspend fun fetchAirQualityData(sido: String): List<AirQualityPoint> =
         withContext(Dispatchers.IO) {
-
             try {
-                // 1️⃣ 서비스 키 URL-safe 인코딩
-//                val decodedKey = URLDecoder.decode(apiKeyRaw, "UTF-8")
-//                val encodedKey = URLEncoder.encode(decodedKey, "UTF-8")
-
-                // 2️⃣ 지역 이름 인코딩
                 val encodedSido = URLEncoder.encode(sido, "UTF-8")
 
-//                // 3️⃣ 최종 URL 구성
-//                val urlStr = "$baseUrl/getCtprvnRltmMesureDnsty" +
-//                        "?serviceKey=$encodedKey" +
-//                        "&returnType=json" +
-//                        "&numOfRows=50" +
-//                        "&pageNo=1" +
-//                        "&sidoName=$encodedSido" +
-//                        "&ver=1.0"
-                  val urlStr = "https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=6c549226b1d12a833ada73516d6c902581e58510a3cf814f84d69714a4af21f8&returnType=xml&numOfRows=1&pageNo=1&sidoName=%EC%84%9C%EC%9A%B8&ver=1.0"
+                val urlStr = "$baseUrl/getCtprvnRltmMesureDnsty" +
+                        "?serviceKey=$serviceKey" +   // 인코딩하지 말 것!
+                        "&returnType=json" +
+                        "&numOfRows=50" +
+                        "&pageNo=1" +
+                        "&sidoName=$encodedSido" +
+                        "&ver=1.0"
 
                 Log.d(TAG, "API URL = $urlStr")
 
-                val url = URL(urlStr)
-                val conn = url.openConnection() as HttpURLConnection
+                val conn = URL(urlStr).openConnection() as HttpURLConnection
                 conn.requestMethod = "GET"
-                conn.connectTimeout = 10000
-                conn.readTimeout = 30000
+                conn.connectTimeout = 30000
+                conn.readTimeout = 90000
 
-                // 4️⃣ 서버 응답 확인
                 val responseCode = conn.responseCode
                 Log.d(TAG, "Response code = $responseCode")
 
@@ -59,7 +48,6 @@ class AirQualityRepository {
 
                 Log.d(TAG, "API Response = $responseText")
 
-                // 5️⃣ JSON 파싱
                 if (responseCode != 200) return@withContext emptyList<AirQualityPoint>()
 
                 val json = JSONObject(responseText)
@@ -72,12 +60,10 @@ class AirQualityRepository {
                     val item = items.getJSONObject(i)
                     val region = item.getString("stationName")
                     val pm10 = item.optString("pm10Value", "0").toIntOrNull() ?: 0
-
                     val coords = getCoordinates(region)
                     result.add(AirQualityPoint(region, coords.first, coords.second, pm10))
                 }
 
-                Log.d(TAG, "Total points = ${result.size}")
                 result
 
             } catch (e: Exception) {
@@ -96,3 +82,4 @@ class AirQualityRepository {
         else -> 37.5665 to 126.9780
     }
 }
+

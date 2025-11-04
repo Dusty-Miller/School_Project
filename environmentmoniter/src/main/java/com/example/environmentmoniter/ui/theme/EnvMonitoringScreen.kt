@@ -98,12 +98,6 @@ fun EnvMonitoringScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 GradientButton(
-                    "새로고침",
-                    listOf(Color(0xFF2196F3), Color(0xFF42A5F5)),
-                    onClick = { viewModel.fetchSensorData() }
-                )
-
-                GradientButton(
                     "대기질 지도",
                     listOf(Color(0xFF4CAF50), Color(0xFF81C784)),
                     onClick = { onNavigateToMap() }
@@ -249,38 +243,37 @@ fun EnvLineChart(history: List<SensorData>) {
         factory = { context ->
             LineChart(context).apply {
                 setBackgroundColor(android.graphics.Color.TRANSPARENT)
-
-                val pm25Set = LineDataSet(pm25Entries, "미세먼지").apply {
-                    color = android.graphics.Color.CYAN
-                    lineWidth = 2f
-                    setDrawCircles(false)
-                    setDrawValues(false)
-                }
-                val tempSet = LineDataSet(tempEntries, "온도").apply {
-                    color = android.graphics.Color.YELLOW
-                    lineWidth = 2f
-                    setDrawCircles(false)
-                    setDrawValues(false)
-                }
-                val humiSet = LineDataSet(humiEntries, "습도").apply {
-                    color = android.graphics.Color.GREEN
-                    lineWidth = 2f
-                    setDrawCircles(false)
-                    setDrawValues(false)
-                }
-
-                data = LineData(pm25Set, tempSet, humiSet)
                 axisRight.isEnabled = false
                 xAxis.textColor = android.graphics.Color.LTGRAY
                 axisLeft.textColor = android.graphics.Color.LTGRAY
                 legend.textColor = android.graphics.Color.WHITE
                 description = Description().apply { text = "" }
-
-                // ✅ 2️⃣ 자동 스크롤 + 부드러운 애니메이션
-                moveViewToX(data.entryCount.toFloat())
-                animateX(500)
-                invalidate()
             }
+        },
+        update = { chart -> // ✅ update 블록 추가 (history가 바뀔 때마다 다시 그림)
+            val pm25Set = LineDataSet(pm25Entries, "미세먼지").apply {
+                color = android.graphics.Color.CYAN
+                lineWidth = 2f
+                setDrawCircles(false)
+                setDrawValues(false)
+            }
+            val tempSet = LineDataSet(tempEntries, "온도").apply {
+                color = android.graphics.Color.YELLOW
+                lineWidth = 2f
+                setDrawCircles(false)
+                setDrawValues(false)
+            }
+            val humiSet = LineDataSet(humiEntries, "습도").apply {
+                color = android.graphics.Color.GREEN
+                lineWidth = 2f
+                setDrawCircles(false)
+                setDrawValues(false)
+            }
+
+            chart.data = LineData(pm25Set, tempSet, humiSet)
+            chart.moveViewToX(chart.data.entryCount.toFloat())
+            chart.animateX(500)
+            chart.invalidate()
         },
         modifier = Modifier
             .fillMaxWidth()
